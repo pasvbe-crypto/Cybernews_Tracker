@@ -1,0 +1,45 @@
+{% extends "index.html" %}
+
+{% block content %}
+{% if registered %}
+    <p role="status">Registration successful. You can now sign in.</p>
+{% endif %}
+{% if user %}
+    <p>Signed in as: <strong>{{ user.username }}</strong> (Role: {{ user.role }})</p>
+    <p>Login-Time: {{ user.login_time }}</p>
+    <a href="{{ url_for('user_dashboard') }}">Open User Dashboard</a>
+    {% if user.role|lower in ['admin', 'administrator'] %}
+        | <a href="{{ url_for('admin_dashboard') }}">Open Admin Dashboard</a>
+    {% endif %}
+{% else %}
+    <p>Not signed in. Enter your account credentials to continue.</p>
+    {% if error %}
+        <p role="alert">{{ error }}</p>
+    {% endif %}
+    <form action="{{ url_for('login') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+        <button type="submit">Sign In</button>
+    </form>
+{% endif %}
+
+<hr>
+<h2>Cookie Check &amp; Security Demo</h2>
+<p>The Flask session cookie is protected from JavaScript. To see how a JavaScript-readable cookie appears, create this harmless demo cookie, then run <code>document.cookie</code> in your browser console.</p>
+<button type="button" id="createDemoCookie">Create demo cookie</button>
+<p id="cookieStatus" role="status">No demo cookie created yet.</p>
+
+<script>
+    document.getElementById("createDemoCookie").addEventListener("click", function () {
+        document.cookie = "cookie_check_demo=javascript-accessible; Path=/; SameSite=Lax; Max-Age=3600";
+        document.getElementById("cookieStatus").textContent =
+            "Demo cookie created. document.cookie: " + document.cookie;
+    });
+</script>
+
+{% endblock %}

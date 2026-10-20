@@ -1,0 +1,37 @@
+{% extends "index.html" %}
+
+{% block content %}
+<section class="forum">
+	<p><a href="{{ url_for('forum') }}">← Back to Forum</a></p>
+	<article class="discussion-card discussion-detail">
+		<h2>{{ discussion.title }}</h2>
+		<p class="forum-meta">Started by {{ discussion.username }} · {{ discussion.created_at }}</p>
+		<p class="discussion-body">{{ discussion.body }}</p>
+	</article>
+
+	<section class="comments">
+		<h3>Comments ({{ comments|length }})</h3>
+		{% if comments %}
+			{% for comment in comments %}
+				<article class="comment-card">
+					<p class="forum-meta">{{ comment.username }} · {{ comment.created_at }}</p>
+					<p class="discussion-body">{{ comment.body }}</p>
+				</article>
+			{% endfor %}
+		{% else %}
+			<p>No comments yet. Add the first one!</p>
+		{% endif %}
+	</section>
+
+	<section class="forum-form">
+		<h3>Add a comment</h3>
+		{% if error %}<p class="forum-error" role="alert">{{ error }}</p>{% endif %}
+		<form method="post">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<label for="body">Comment</label>
+			<textarea id="body" name="body" rows="5" maxlength="5000" required>{{ comment_body }}</textarea>
+			<button type="submit">Post comment</button>
+		</form>
+	</section>
+</section>
+{% endblock %}

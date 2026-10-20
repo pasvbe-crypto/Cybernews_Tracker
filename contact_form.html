@@ -1,0 +1,25 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h2>Get in Contact</h2>
+
+<form action="{{ url_for('submit_message') }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required>
+    </div>
+    
+    <div>
+        <label for="email">E-Mail:</label><br>
+        <input type="email" id="email" name="email" required>
+    </div>
+    
+    <div>
+        <label for="message">Message:</label><br>
+        <textarea id="message" name="message" rows="5" required></textarea>
+    </div>
+    
+    <button type="submit">Send</button>
+</form>
+{% endblock %}
