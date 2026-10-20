@@ -1,0 +1,19 @@
+{% extends "index.html" %}
+
+{% block content %}
+<section class="forum forum-form">
+	<h2>Start a discussion</h2>
+	{% if error %}<p class="forum-error" role="alert">{{ error }}</p>{% endif %}
+	<form method="post">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<label for="title">Title</label>
+		<input id="title" name="title" type="text" maxlength="160" required value="{{ title }}">
+		<label for="body">Message</label>
+		<textarea id="body" name="body" rows="8" maxlength="10000" required>{{ body }}</textarea>
+		<div class="forum-form-actions">
+			<button type="submit">Post discussion</button>
+			<a href="{{ url_for('forum') }}">Cancel</a>
+		</div>
+	</form>
+</section>
+{% endblock %}

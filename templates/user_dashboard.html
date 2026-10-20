@@ -1,0 +1,9 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h2>User Dashboard</h2>
+<p>Welcome, <strong>{{ user.username }}</strong>.</p>
+<p>Your role is <strong>{{ user.role }}</strong>.</p>
+<p>Last login: {{ user.last_login_at or "Not recorded yet" }}</p>
+<p>Registration date: {{ user.created_at or "Not recorded (existing account)" }}</p>
+{% endblock %}
