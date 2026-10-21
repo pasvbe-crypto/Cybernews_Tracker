@@ -49,6 +49,29 @@ flask run
 
 If an API key has been exposed, revoke it and replace it before deployment.
 
+## Intelligence API
+
+The signed-in `/intelligence` page prompts for a bearer token and appends each
+successful response as a new report. The independent `GET /api/intelligence-feed`
+endpoint requires an `Authorization: Bearer <token>` header and returns
+synthetic, role-specific training data for the token's `admin` or `analyst`
+role. Invalid or missing tokens receive HTTP 401. The API token does not replace
+or depend on the website's session login.
+
+Configure active tokens in the `INTELLIGENCE_TOKENS` environment variable as a
+JSON object mapping each private token to its role, for example:
+
+```json
+{"replace-with-a-long-random-token":"analyst"}
+```
+
+Set this value locally or in the hosting provider's private environment
+settings. Never commit real bearer tokens to the repository or share them in
+chat. An empty setting disables successful API access.
+
+The site uses the bundled Silkscreen pixel font; its SIL Open Font License is
+included at `static/Silkscreen-OFL.txt`.
+
 ## Deploying on Render
 
 Render's default service filesystem is ephemeral, so the SQLite database under
