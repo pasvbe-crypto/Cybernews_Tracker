@@ -10,11 +10,17 @@
 			console.error("Unable to load the saved theme preference.", error);
 		}
 	</script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='5') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='6') }}">
 	<title>CyberNews Tracker</title>
 </head>
 <body>
 	<header>
+		{% if current_user %}
+			<div class="balance-badge" aria-label="Cyberhacks Points balance">
+				<span>CP BALANCE</span>
+				<strong>{{ "{:,}".format(current_user.cyberhacks_points) }}</strong>
+			</div>
+		{% endif %}
 		<button id="themeToggle" class="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Dark mode">
 			<span class="theme-toggle-track" aria-hidden="true"><span></span></span>
 			<span id="themeLabel">Dark mode</span>
