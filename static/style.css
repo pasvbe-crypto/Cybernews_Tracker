@@ -229,6 +229,12 @@ footer a:visited {
 	margin: 0 auto;
 }
 
+.auth-page {
+	width: min(100% - 32px, 520px);
+	margin: 0 clamp(16px, 8vw, 120px) 0 auto;
+	text-align: left;
+}
+
 .news-page,
 .forum,
 .home-video,
@@ -331,6 +337,30 @@ main > form {
 	padding: 24px;
 	background: var(--surface);
 	text-align: left;
+}
+
+.auth-page form {
+	display: flex;
+	width: 100%;
+	margin: 20px 0;
+	align-items: stretch;
+	flex-direction: column;
+	gap: 14px;
+	padding: 24px;
+	background: var(--surface);
+	text-align: left;
+}
+
+.auth-page form input:not([type="hidden"]) {
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	background: var(--input-bg);
+	color: var(--text);
+}
+
+.auth-page form button {
+	align-self: flex-start;
 }
 
 main > form > div {
@@ -475,6 +505,10 @@ hr {
 	.forum-heading {
 		align-items: flex-start;
 		flex-direction: column;
+	}
+
+	.auth-page {
+		margin-right: auto;
 	}
 
 	.forum-form-actions {
