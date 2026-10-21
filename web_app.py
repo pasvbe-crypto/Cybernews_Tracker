@@ -266,6 +266,36 @@ def initialize_database():
       )
     connection.execute(
         """
+        CREATE TABLE IF NOT EXISTS app_migrations (
+          name TEXT PRIMARY KEY,
+          applied_at TEXT NOT NULL
+        )
+        """
+    )
+    patrick_points_migration = "set-patrick-cyberhacks-points-to-100000"
+    migration_applied = connection.execute(
+        "SELECT 1 FROM app_migrations WHERE name = ?",
+        (patrick_points_migration,),
+    ).fetchone()
+    if migration_applied is None:
+      patrick = connection.execute(
+          "SELECT id FROM users WHERE username = ? COLLATE NOCASE",
+          ("Patrick",),
+      ).fetchone()
+      if patrick is not None:
+        connection.execute(
+            "UPDATE users SET cyberhacks_points = 100000 WHERE id = ?",
+            (patrick["id"],),
+        )
+        connection.execute(
+            "INSERT INTO app_migrations (name, applied_at) VALUES (?, ?)",
+            (
+                patrick_points_migration,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            ),
+        )
+    connection.execute(
+        """
         CREATE TABLE IF NOT EXISTS sessions (
           sid_hash TEXT PRIMARY KEY,
           data TEXT NOT NULL,

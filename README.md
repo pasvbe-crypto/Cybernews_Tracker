@@ -9,6 +9,10 @@ server or browser. Signed-in users earn 1, 3, 5, 10, and 25 Cyberhacks Points
 for completing the levels; each replay is a new run and can earn the rewards
 again.
 
+On its first startup with a Patrick account present, the application sets
+Patrick's Cyberhacks Points balance to 100,000. This one-time initialization
+does not overwrite his balance on later restarts.
+
 ## Run locally
 
 Requirements: Python 3.12 or newer.
