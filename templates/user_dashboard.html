@@ -6,4 +6,5 @@
 <p>Your role is <strong>{{ user.role }}</strong>.</p>
 <p>Last login: {{ user.last_login_at or "Not recorded yet" }}</p>
 <p>Registration date: {{ user.created_at or "Not recorded (existing account)" }}</p>
+<p>Cyberhacks Points: <strong>{{ user.cyberhacks_points }} CP</strong></p>
 {% endblock %}

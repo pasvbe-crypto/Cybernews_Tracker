@@ -1,0 +1,87 @@
+{% extends "index.html" %}
+
+{% block content %}
+<section class="hack-me">
+    <div class="hack-me-heading">
+        <h2>Hack Me</h2>
+        <p>Your Cyberhacks Points: <strong>{{ current_user.cyberhacks_points }} CP</strong></p>
+    </div>
+    <p class="hack-me-safety">
+        A PowerShell command puzzle running in a simulated lab. Commands are never
+        executed on your device or the server. Complete all five levels to earn
+        {{ total_points }} CP per playthrough; replay to earn them again.
+    </p>
+
+    {% if notice %}
+        <p class="hack-me-notice" role="status">{{ notice }}</p>
+    {% endif %}
+
+    <ol class="hack-levels" aria-label="Level progress">
+        {% for item in levels %}
+            <li class="{% if item.number < level_number %}completed{% elif item.number == level_number %}current{% endif %}">
+                <span>Level {{ item.number }}</span>
+                <strong>+{{ item.points }} CP</strong>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <div class="hack-terminal">
+        <div class="hack-terminal-title">SIMULATED POWERSHELL LAB</div>
+        <div class="hack-terminal-output" aria-live="polite">
+            {% if terminal_command %}
+                <p>PS C:\Lab&gt; {{ terminal_command }}</p>
+                <pre>{{ terminal_output }}</pre>
+            {% else %}
+                <p>PS C:\Lab&gt;</p>
+                <pre>{{ terminal_output or "The simulated lab is ready. Enter a command to begin." }}</pre>
+            {% endif %}
+            {% if level %}
+                <p>Level {{ level.number }} — {{ level.title }}</p>
+                <p>{{ level.mission }}</p>
+            {% else %}
+                <p>All five levels complete. You earned {{ run_points }} CP this run.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if level %}
+        <p class="hack-me-hint">{{ level.hint }}</p>
+        <form class="hack-command-form" action="{{ url_for('hack_me') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="hack-command">Enter a PowerShell command</label>
+            <div class="hack-command-entry">
+                <span aria-hidden="true">PS&gt;</span>
+                <input
+                    id="hack-command"
+                    name="command"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    maxlength="200"
+                    required
+                >
+                <button type="submit">Run in lab</button>
+            </div>
+        </form>
+        <p class="hack-run-score">CP earned this run: {{ run_points }}</p>
+    {% else %}
+        <p class="hack-run-score">CP earned this run: {{ run_points }}</p>
+        <form class="hack-replay-form" action="{{ url_for('hack_me') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="replay">
+            <button type="submit">Replay for more CP</button>
+        </form>
+    {% endif %}
+
+    <details class="hack-command-reference">
+        <summary>PowerShell command reference</summary>
+        <ul>
+            <li><code>Get-ChildItem</code> — list files and folders</li>
+            <li><code>Get-Content</code> — read a file</li>
+            <li><code>Select-String</code> — search text in a file</li>
+            <li><code>Get-Process</code> and <code>Sort-Object</code> — review and sort processes</li>
+            <li><code>Get-FileHash</code> — calculate a file fingerprint</li>
+        </ul>
+    </details>
+</section>
+{% endblock %}
