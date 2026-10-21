@@ -1,3 +1,11 @@
+@font-face {
+	font-family: "Silkscreen";
+	src: url("silkscreen-regular.ttf") format("truetype");
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+}
+
 :root {
 	color-scheme: dark;
 	--page-bg: #100d19;
@@ -46,7 +54,7 @@ body {
 	flex-direction: column;
 	background: var(--page-bg);
 	color: var(--text);
-	font-family: "Cascadia Code", "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
+	font-family: "Silkscreen", "Cascadia Code", "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
 	line-height: 1.65;
 	text-align: center;
 	transition: background-color 180ms ease, color 180ms ease;
@@ -485,6 +493,42 @@ footer a:visited {
 
 .hack-command-reference code {
 	color: var(--text);
+}
+
+.intelligence-page {
+	width: min(100% - 32px, 900px);
+	margin: 0 auto;
+	text-align: left;
+}
+
+.intelligence-intro,
+.intelligence-report-meta,
+.intelligence-empty {
+	color: var(--muted);
+}
+
+.intelligence-reports {
+	margin-top: 28px;
+}
+
+.intelligence-report {
+	margin: 16px 0;
+	padding: 18px;
+	background: var(--surface);
+	overflow-wrap: anywhere;
+}
+
+.intelligence-report h3 {
+	margin-top: 0;
+	color: var(--accent);
+}
+
+.intelligence-report ul {
+	padding-left: 24px;
+}
+
+.intelligence-report li + li {
+	margin-top: 8px;
 }
 
 .auth-page {
