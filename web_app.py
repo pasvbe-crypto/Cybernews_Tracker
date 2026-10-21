@@ -40,6 +40,96 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
 ).lower() in {"1", "true", "yes"}
 
 AVAILABLE_ROLES = ("User", "Teaching Assistant", "GOAT")
+HACK_ME_LEVELS = (
+    {
+        "number": 1,
+        "title": "Inventory the lab",
+        "mission": "List the files in the simulated lab folder to locate its briefing.",
+        "hint": "Use the PowerShell command that lists items in the current directory.",
+        "commands": ("get-childitem", "gci", "dir", "ls"),
+        "output": (
+            "Directory: C:\\Lab\n\n"
+            "Mode    Name\n"
+            "----    ----\n"
+            "-a---    briefing.txt\n"
+            "-a---    auth.log\n"
+            "-a---    evidence.zip"
+        ),
+        "points": 1,
+    },
+    {
+        "number": 2,
+        "title": "Read the briefing",
+        "mission": "Read briefing.txt to learn which simulated log needs investigating.",
+        "hint": "Use Get-Content with the briefing file path.",
+        "commands": (
+            "get-content .\\briefing.txt",
+            "gc .\\briefing.txt",
+            "cat .\\briefing.txt",
+            "type .\\briefing.txt",
+        ),
+        "output": (
+            "Investigation note:\n"
+            "Search auth.log for failed sign-in events before reviewing the evidence."
+        ),
+        "points": 3,
+    },
+    {
+        "number": 3,
+        "title": "Search the sign-in log",
+        "mission": "Find failed sign-in events in the simulated auth.log.",
+        "hint": "Use Select-String with the log path and the pattern failed.",
+        "commands": (
+            'select-string -path .\\auth.log -pattern "failed"',
+            "select-string -path .\\auth.log -pattern failed",
+            "sls -path .\\auth.log -pattern failed",
+        ),
+        "output": (
+            "auth.log:12: 08:42:10 user=alex event=failed-sign-in\n"
+            "auth.log:18: 08:44:03 user=alex event=failed-sign-in\n"
+            "Summary: 2 failed sign-ins found for alex (simulated records)."
+        ),
+        "points": 5,
+    },
+    {
+        "number": 4,
+        "title": "Review the process list",
+        "mission": "Sort the simulated process list by CPU usage, highest first.",
+        "hint": "Pipe Get-Process into Sort-Object using the CPU property and descending order.",
+        "commands": (
+            "get-process | sort-object cpu -descending",
+            "get-process | sort-object cpu -desc",
+            "gps | sort-object cpu -descending",
+            "gps | sort-object cpu -desc",
+        ),
+        "output": (
+            "Name             CPU (simulated)\n"
+            "----             ---------------\n"
+            "backup-agent      12.4\n"
+            "audit-viewer       3.1\n"
+            "notepad            0.4"
+        ),
+        "points": 10,
+    },
+    {
+        "number": 5,
+        "title": "Fingerprint the evidence",
+        "mission": "Calculate a SHA256 hash for the simulated evidence.zip file.",
+        "hint": "Use Get-FileHash with the file path and SHA256 algorithm.",
+        "commands": (
+            "get-filehash .\\evidence.zip -algorithm sha256",
+            "get-filehash .\\evidence.zip -algorithm sha-256",
+        ),
+        "output": (
+            "Algorithm  Hash\n"
+            "---------  ----\n"
+            "SHA256     7F3A91D45C6B2E08A1F04D77236B9C50"
+            "8A6E2D1F4C7B9053E6A21D8F0B4C7291\n"
+            "Simulated fingerprint recorded."
+        ),
+        "points": 25,
+    },
+)
 
 
 class ServerSideSession(CallbackDict, SessionMixin):
@@ -169,12 +259,30 @@ def initialize_database():
       connection.execute("ALTER TABLE users ADD COLUMN created_at TEXT")
     if "last_login_at" not in user_columns:
       connection.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
+    if "cyberhacks_points" not in user_columns:
+      connection.execute(
+          "ALTER TABLE users ADD COLUMN cyberhacks_points "
+          "INTEGER NOT NULL DEFAULT 0"
+      )
     connection.execute(
         """
         CREATE TABLE IF NOT EXISTS sessions (
           sid_hash TEXT PRIMARY KEY,
           data TEXT NOT NULL,
           expires_at REAL NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cyberhacks_awards (
+          id INTEGER PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          run_id TEXT NOT NULL,
+          level INTEGER NOT NULL CHECK (level BETWEEN 1 AND 5),
+          points INTEGER NOT NULL CHECK (points > 0),
+          earned_at TEXT NOT NULL,
+          UNIQUE(user_id, run_id, level)
         )
         """
     )
@@ -249,19 +357,17 @@ def load_logged_in_user():
 
   with get_db_connection() as connection:
     user = connection.execute(
-        "SELECT id, username, role FROM users WHERE id = ?",
+        """
+        SELECT id, username, role, created_at, last_login_at,
+               cyberhacks_points
+        FROM users WHERE id = ?
+        """,
         (user_id,),
     ).fetchone()
 
   if user is None:
     session.clear()
     return
-
-  with get_db_connection() as connection:
-    account_details = connection.execute(
-        "SELECT created_at, last_login_at FROM users WHERE id = ?",
-        (user_id,),
-    ).fetchone()
 
   if session.get("role") != user["role"]:
     session["role"] = user["role"]
@@ -271,8 +377,9 @@ def load_logged_in_user():
       "username": user["username"],
       "role": user["role"],
       "login_time": session.get("login_time"),
-      "created_at": account_details["created_at"],
-      "last_login_at": account_details["last_login_at"],
+      "created_at": user["created_at"],
+      "last_login_at": user["last_login_at"],
+      "cyberhacks_points": user["cyberhacks_points"],
   }
 
 
@@ -354,6 +461,148 @@ def news():
       "news.html",
       username=username,
       last_updated=last_updated,
+  )
+
+
+@app.route("/hack-me", methods=["GET", "POST"])
+@login_required
+def hack_me():
+  if request.method == "POST":
+    validate_csrf_token()
+    action = request.form.get("action", "command")
+    if action == "replay":
+      session["hack_me_run_id"] = secrets.token_urlsafe(24)
+      session["hack_me_level"] = 1
+      session["hack_me_earned"] = 0
+      session.pop("hack_me_last_command", None)
+      session.pop("hack_me_last_output", None)
+      session["hack_me_notice"] = "New playthrough started. Earn CP again!"
+      return redirect(url_for("hack_me"))
+    if action != "command":
+      abort(400, description="Invalid Hack Me action.")
+
+    level_number = session.get("hack_me_level", 1)
+    if (
+        not isinstance(level_number, int)
+        or isinstance(level_number, bool)
+        or not 1 <= level_number <= len(HACK_ME_LEVELS) + 1
+    ):
+      session["hack_me_run_id"] = secrets.token_urlsafe(24)
+      session["hack_me_level"] = 1
+      session["hack_me_earned"] = 0
+      session["hack_me_notice"] = "Invalid game progress was reset to Level 1."
+      return redirect(url_for("hack_me"))
+    if level_number == len(HACK_ME_LEVELS) + 1:
+      session["hack_me_notice"] = "You completed all five levels. Replay to earn again."
+      return redirect(url_for("hack_me"))
+
+    level = HACK_ME_LEVELS[level_number - 1]
+    raw_command = request.form.get("command", "")
+    if len(raw_command) > 200:
+      session["hack_me_last_command"] = ""
+      session["hack_me_last_output"] = "Commands must be 200 characters or fewer."
+      session["hack_me_notice"] = "Commands must be 200 characters or fewer."
+      return redirect(url_for("hack_me"))
+
+    command = " ".join(raw_command.strip().split()).casefold()
+    if command not in level["commands"]:
+      session["hack_me_last_command"] = raw_command
+      session["hack_me_last_output"] = (
+          "Command not recognized by the simulated lab. "
+          "Use the level hint and try again."
+      )
+      session["hack_me_notice"] = (
+          f"That command did not solve Level {level_number}. "
+          "This terminal only accepts safe, simulated game commands."
+      )
+      return redirect(url_for("hack_me"))
+
+    run_id = session.get("hack_me_run_id")
+    if not isinstance(run_id, str):
+      run_id = secrets.token_urlsafe(24)
+      session["hack_me_run_id"] = run_id
+      session["hack_me_level"] = 1
+      session["hack_me_earned"] = 0
+      return redirect(url_for("hack_me"))
+
+    award_recorded = False
+    with get_db_connection() as connection:
+      cursor = connection.execute(
+          """
+          INSERT INTO cyberhacks_awards
+              (user_id, run_id, level, points, earned_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(user_id, run_id, level) DO NOTHING
+          """,
+          (
+              g.current_user["id"],
+              run_id,
+              level_number,
+              level["points"],
+              datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+          ),
+      )
+      award_recorded = cursor.rowcount == 1
+      if award_recorded:
+        connection.execute(
+            "UPDATE users SET cyberhacks_points = "
+            "cyberhacks_points + ? WHERE id = ?",
+            (level["points"], g.current_user["id"]),
+        )
+
+    session["hack_me_level"] = level_number + 1
+    session["hack_me_last_command"] = raw_command
+    session["hack_me_last_output"] = level["output"]
+    if award_recorded:
+      session["hack_me_earned"] = (
+          session.get("hack_me_earned", 0) + level["points"]
+      )
+      session["hack_me_notice"] = (
+          f"Level {level_number} complete! +{level['points']} CP"
+      )
+    else:
+      session["hack_me_notice"] = (
+          f"Level {level_number} was already rewarded in this playthrough."
+      )
+    return redirect(url_for("hack_me"))
+
+  level_number = session.get("hack_me_level", 1)
+  if (
+      not isinstance(level_number, int)
+      or isinstance(level_number, bool)
+      or not 1 <= level_number <= len(HACK_ME_LEVELS) + 1
+  ):
+    session["hack_me_run_id"] = secrets.token_urlsafe(24)
+    session["hack_me_level"] = 1
+    session["hack_me_earned"] = 0
+    session.pop("hack_me_last_command", None)
+    session.pop("hack_me_last_output", None)
+    session["hack_me_notice"] = "Invalid game progress was reset to Level 1."
+    level_number = 1
+
+  if not isinstance(session.get("hack_me_run_id"), str):
+    session["hack_me_run_id"] = secrets.token_urlsafe(24)
+    session["hack_me_level"] = 1
+    session["hack_me_earned"] = 0
+    session.pop("hack_me_last_command", None)
+    session.pop("hack_me_last_output", None)
+    level_number = 1
+
+  if level_number <= len(HACK_ME_LEVELS):
+    level = HACK_ME_LEVELS[level_number - 1]
+  else:
+    level = None
+
+  return render_template(
+      "hack_me.html",
+      level=level,
+      levels=HACK_ME_LEVELS,
+      level_number=level_number,
+      total_points=sum(item["points"] for item in HACK_ME_LEVELS),
+      run_points=session.get("hack_me_earned", 0),
+      terminal_command=session.get("hack_me_last_command"),
+      terminal_output=session.get("hack_me_last_output"),
+      notice=session.pop("hack_me_notice", None),
   )
 
 

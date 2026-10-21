@@ -3,6 +3,12 @@
 A Flask application for tracking cybersecurity news, with account registration,
 role-based dashboards, and a discussion forum.
 
+The **Hack Me** page contains a five-level simulated PowerShell puzzle. Its
+read-only commands are evaluated by the application and are never run by the
+server or browser. Signed-in users earn 1, 3, 5, 10, and 25 Cyberhacks Points
+for completing the levels; each replay is a new run and can earn the rewards
+again.
+
 ## Run locally
 
 Requirements: Python 3.12 or newer.
