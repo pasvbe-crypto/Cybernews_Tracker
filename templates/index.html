@@ -10,7 +10,7 @@
 			console.error("Unable to load the saved theme preference.", error);
 		}
 	</script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='3') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='4') }}">
 	<title>CyberNews Tracker</title>
 </head>
 <body>
@@ -38,8 +38,10 @@
 					<button type="submit">Logout</button>
 				</form>
 			{% else %}
-				<a href="{{ url_for('cookie_check') }}" class="{% if request.endpoint in ['cookie_check', 'login'] %}active{% endif %}" {% if request.endpoint in ['cookie_check', 'login'] %}aria-current="page"{% endif %}>Login</a>
+				<span class="nav-account-links">
+					<a href="{{ url_for('cookie_check') }}" class="{% if request.endpoint in ['cookie_check', 'login'] %}active{% endif %}" {% if request.endpoint in ['cookie_check', 'login'] %}aria-current="page"{% endif %}>Login</a>
 				<a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}" {% if request.endpoint == 'register' %}aria-current="page"{% endif %}>Register</a>
+				</span>
 			{% endif %}
 			<a href="{{ url_for('free_money') }}" class="{% if request.endpoint in ['free_money', 'demo_donation', 'demo_withdrawal'] %}active{% endif %}" {% if request.endpoint in ['free_money', 'demo_donation', 'demo_withdrawal'] %}aria-current="page"{% endif %}>Free Money - Claim</a>
 		</nav>
