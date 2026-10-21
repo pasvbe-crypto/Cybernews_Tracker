@@ -186,22 +186,27 @@ nav {
 }
 
 nav.signed-in-nav {
-	justify-content: space-between;
+	justify-content: flex-start;
 }
 
+.nav-dashboard-link,
 .nav-main-links,
-.nav-actions {
+.nav-account-actions {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 4px 18px;
 }
 
+.nav-dashboard-link {
+	margin-right: clamp(24px, 4vw, 64px);
+}
+
 .nav-main-links {
 	justify-content: flex-start;
 }
 
-.nav-actions {
+.nav-account-actions {
 	justify-content: flex-end;
 	margin-left: auto;
 }
@@ -216,12 +221,17 @@ nav.signed-in-nav {
 		justify-content: center;
 	}
 
+	.nav-dashboard-link,
 	.nav-main-links,
-	.nav-actions {
+	.nav-account-actions {
 		justify-content: center;
 	}
 
-	.nav-actions {
+	.nav-dashboard-link {
+		margin-right: 0;
+	}
+
+	.nav-account-actions {
 		margin-left: 0;
 	}
 }
@@ -296,6 +306,28 @@ footer {
 	margin-top: auto;
 	padding: 18px 20px;
 	color: var(--muted);
+}
+
+footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.footer-nav {
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: 18px;
+	margin: 0;
+}
+
+.footer-nav a {
+	color: var(--accent);
+	font-weight: bold;
 }
 
 footer p {
@@ -878,9 +910,20 @@ hr {
 		gap: 6px 14px;
 	}
 
+	.nav-dashboard-link,
 	.nav-main-links,
-	.nav-actions {
+	.nav-account-actions {
 		gap: 6px 14px;
+	}
+
+	footer {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.footer-nav {
+		justify-content: flex-start;
+		flex-wrap: wrap;
 	}
 
 	.news-heading,
