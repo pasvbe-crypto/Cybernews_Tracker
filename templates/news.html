@@ -1,16 +1,86 @@
 {% extends "index.html" %}
 
 {% block content %}
-    <h1>Welcome back, {{ username }}!</h1>
+<section class="news-page">
+    <h1>Welcome, {{ username }}!</h1>
     <p>Last Updated: {{ last_updated }}</p>
 
-    <h2>Current Cybersecurity News</h2>
-    <ul>
-        {% for article in articles %}
-            <li>
-                <strong>{{ article.title }}</strong>
-                <p>{{ article.summary }}</p>
-            </li>
-        {% endfor %}
-    </ul>
+    <div class="news-heading">
+        <h2>Current Cybersecurity News</h2>
+        <button id="refreshHeadlines" type="button">Refresh Headlines</button>
+    </div>
+    <p id="newsStatus" role="status" aria-live="polite"></p>
+    <ul id="headlinesContainer" class="news-list"></ul>
+</section>
+
+<script>
+    const headlinesContainer = document.getElementById("headlinesContainer");
+    const newsStatus = document.getElementById("newsStatus");
+    const refreshButton = document.getElementById("refreshHeadlines");
+
+    function renderHeadlines(articles) {
+        headlinesContainer.replaceChildren();
+        newsStatus.textContent = "";
+        for (const article of articles) {
+            const item = document.createElement("li");
+            const link = document.createElement("a");
+            const source = document.createElement("span");
+            const articleUrl = new URL(article.url, window.location.href);
+
+            link.textContent = article.title;
+            if (["http:", "https:"].includes(articleUrl.protocol)) {
+                link.href = articleUrl.href;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+            }
+            source.textContent = ` — ${article.source}`;
+            item.append(link, source);
+            headlinesContainer.appendChild(item);
+        }
+        if (articles.length === 0) {
+            newsStatus.textContent = "No headlines are available right now.";
+        }
+    }
+
+    async function fetchHeadlines(endpoint) {
+        const response = await fetch(endpoint);
+        const data = await response.json();
+        if (!response.ok || !Array.isArray(data)) {
+            throw new Error("The headlines could not be loaded.");
+        }
+        renderHeadlines(data);
+    }
+
+    async function loadLocalHeadlines() {
+        try {
+            await fetchHeadlines("/api/news");
+        } catch (error) {
+            console.error("Unable to load local headlines.", error);
+            newsStatus.textContent = "News unavailable right now. Please try again later.";
+        }
+    }
+
+    refreshButton.addEventListener("click", async () => {
+        refreshButton.disabled = true;
+        newsStatus.textContent = "Loading live headlines…";
+        try {
+            await fetchHeadlines("/api/live-news");
+        } catch (error) {
+            console.error("Unable to load live headlines.", error);
+            try {
+                await fetchHeadlines("/api/news");
+                newsStatus.textContent =
+                    "Live news unavailable right now. Showing local headlines instead.";
+            } catch (fallbackError) {
+                console.error("Unable to load fallback headlines.", fallbackError);
+                newsStatus.textContent =
+                    "News unavailable right now. Please try again later.";
+            }
+        } finally {
+            refreshButton.disabled = false;
+        }
+    });
+
+    loadLocalHeadlines();
+</script>
 {% endblock %}
