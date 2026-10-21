@@ -42,4 +42,56 @@
     {% endfor %}
     </tbody>
 </table>
+
+<section class="admin-orders">
+    <h3>CP Shop orders</h3>
+    {% if orders %}
+        <div class="shop-table-wrapper">
+            <table class="admin-order-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Item</th>
+                        <th>CP spent</th>
+                        <th>Recipient</th>
+                        <th>Shipping address</th>
+                        <th>Status</th>
+                        <th>Order date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ order.username }}</td>
+                        <td>{{ order.item_name }}</td>
+                        <td>{{ "{:,}".format(order.points_spent) }} CP</td>
+                        <td>{{ order.recipient_name }}</td>
+                        <td><address>{{ order.shipping_address }}</address></td>
+                        <td>
+                            {{ order.status|title }}
+                            {% if order.fulfilled_at %}
+                                <br>{{ order.fulfilled_at }}
+                            {% endif %}
+                        </td>
+                        <td>{{ order.created_at }}</td>
+                        <td>
+                            {% if order.status == 'pending' %}
+                                <form action="{{ url_for('fulfill_cp_shop_order', order_id=order.id) }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit">Mark fulfilled</button>
+                                </form>
+                            {% else %}
+                                <span>Complete</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No CP Shop orders yet.</p>
+    {% endif %}
+</section>
 {% endblock %}

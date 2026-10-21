@@ -10,7 +10,7 @@
 			console.error("Unable to load the saved theme preference.", error);
 		}
 	</script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='6') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='7') }}">
 	<title>CyberNews Tracker</title>
 </head>
 <body>
@@ -27,12 +27,13 @@
 		</button>
 		<h1>Cybernews Tracker</h1>
 		<p id="greeting"></p>
-		<nav>
-			<a href="{{ url_for('home') }}" class="{% if request.endpoint == 'home' %}active{% endif %}" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
-			<a href="{{ url_for('news') }}" class="{% if request.endpoint == 'news' %}active{% endif %}" {% if request.endpoint == 'news' %}aria-current="page"{% endif %}>News</a>
-			<a href="{{ url_for('contact') }}" class="{% if request.endpoint == 'contact' %}active{% endif %}" {% if request.endpoint == 'contact' %}aria-current="page"{% endif %}>Contact</a>
-			<a href="{{ url_for('forum') }}" class="{% if request.endpoint in ['forum', 'new_discussion', 'view_discussion'] %}active{% endif %}" {% if request.endpoint in ['forum', 'new_discussion', 'view_discussion'] %}aria-current="page"{% endif %}>Forum</a>
-			<a href="{{ url_for('hack_me') }}" class="{% if request.endpoint == 'hack_me' %}active{% endif %}" {% if request.endpoint == 'hack_me' %}aria-current="page"{% endif %}>Hack Me</a>
+		<nav class="{% if current_user %}signed-in-nav{% endif %}">
+			<span class="nav-main-links">
+				<a href="{{ url_for('home') }}" class="{% if request.endpoint == 'home' %}active{% endif %}" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
+				<a href="{{ url_for('news') }}" class="{% if request.endpoint == 'news' %}active{% endif %}" {% if request.endpoint == 'news' %}aria-current="page"{% endif %}>News</a>
+				<a href="{{ url_for('contact') }}" class="{% if request.endpoint == 'contact' %}active{% endif %}" {% if request.endpoint == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+				<a href="{{ url_for('forum') }}" class="{% if request.endpoint in ['forum', 'new_discussion', 'view_discussion'] %}active{% endif %}" {% if request.endpoint in ['forum', 'new_discussion', 'view_discussion'] %}aria-current="page"{% endif %}>Forum</a>
+				<a href="{{ url_for('hack_me') }}" class="{% if request.endpoint == 'hack_me' %}active{% endif %}" {% if request.endpoint == 'hack_me' %}aria-current="page"{% endif %}>Hack Me</a>
 			{% if current_user %}
 				{% if current_user.username|lower == 'patrick' and current_user.role|lower in ['admin', 'administrator'] %}
 					<a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}" {% if request.endpoint == 'admin_dashboard' %}aria-current="page"{% endif %}>Admin Dashboard</a>
@@ -40,10 +41,15 @@
 					<a href="{{ url_for('user_dashboard') }}" class="{% if request.endpoint == 'user_dashboard' %}active{% endif %}" {% if request.endpoint == 'user_dashboard' %}aria-current="page"{% endif %}>User Dashboard</a>
 				{% endif %}
 				<span class="nav-user">{{ current_user.username }} ({{ current_user.role }})</span>
+			{% endif %}
+			</span>
+			<span class="nav-actions">
+			{% if current_user %}
 				<form action="{{ url_for('logout') }}" method="post" class="inline-form">
 					<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 					<button type="submit">Logout</button>
 				</form>
+				<a href="{{ url_for('cp_shop') }}" class="{% if request.endpoint == 'cp_shop' %}active{% endif %}" {% if request.endpoint == 'cp_shop' %}aria-current="page"{% endif %}>CP Shop</a>
 			{% else %}
 				<span class="nav-account-links">
 					<a href="{{ url_for('cookie_check') }}" class="{% if request.endpoint in ['cookie_check', 'login'] %}active{% endif %}" {% if request.endpoint in ['cookie_check', 'login'] %}aria-current="page"{% endif %}>Login</a>
@@ -51,10 +57,20 @@
 				</span>
 			{% endif %}
 			<a href="{{ url_for('free_money') }}" class="{% if request.endpoint in ['free_money', 'demo_donation', 'demo_withdrawal'] %}active{% endif %}" {% if request.endpoint in ['free_money', 'demo_donation', 'demo_withdrawal'] %}aria-current="page"{% endif %}>Free Money - Claim</a>
+			</span>
 		</nav>
 	</header>
 
 	<main>
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				<div class="flash-messages" role="status" aria-live="polite">
+					{% for category, message in messages %}
+						<p class="flash-message flash-{{ category }}">{{ message }}</p>
+					{% endfor %}
+				</div>
+			{% endif %}
+		{% endwith %}
 		{% block content %}
 		{% endblock %}
 	</main>
