@@ -2,21 +2,36 @@ from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
 import hashlib
+from http.client import HTTPException
 import json
 import os
 import secrets
 import sqlite3
 import time
+from urllib.parse import urlencode, urlparse
+from urllib.request import urlopen
 
 import click
-from flask import Flask, abort, g, redirect, render_template, request, session, url_for
+from flask import (
+    Flask,
+    abort,
+    g,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.datastructures import CallbackDict
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
-app.config["DATABASE"] = os.path.join(app.instance_path, "cybernews.sqlite3")
+app.config["DATABASE"] = os.environ.get("DATABASE_PATH") or os.path.join(
+    app.instance_path, "cybernews.sqlite3"
+)
 app.config["SESSION_COOKIE_NAME"] = "session_token"
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -134,7 +149,8 @@ def get_db_connection():
 
 
 def initialize_database():
-  os.makedirs(app.instance_path, exist_ok=True)
+  database_directory = os.path.dirname(os.path.abspath(app.config["DATABASE"]))
+  os.makedirs(database_directory, exist_ok=True)
   with get_db_connection() as connection:
     connection.execute(
         """
@@ -332,36 +348,98 @@ def account_required(username, roles):
 @app.route("/news")
 def news():
   username = g.current_user["username"] if g.current_user else "Guest"
-  articles = [
-      {
-          "title": "New AI Breakthrough",
-          "summary": (
-              "Researchers develop secure language models to prevent prompt"
-              " injection."
-          ),
-      },
-      {
-          "title": "Cyberattack on Major Bank",
-          "summary": (
-              "Millions of account details compromised in a sophisticated"
-              " breach."
-          ),
-      },
-      {
-          "title": "Flask 3.0 Released",
-          "summary": (
-              "The new version simplifies routing and enhances async support."
-          ),
-      },
-  ]
   last_updated = datetime.now().strftime("%Y-%m-%d %H:%M")
 
   return render_template(
       "news.html",
       username=username,
-      articles=articles,
       last_updated=last_updated,
   )
+
+
+@app.route("/api/news")
+def static_news():
+  return jsonify(
+      [
+          {
+              "title": "Keep software and devices up to date",
+              "source": "CISA",
+              "url": "https://www.cisa.gov/secure-our-world",
+          },
+          {
+              "title": "Recognize and report phishing",
+              "source": "CISA",
+              "url": "https://www.cisa.gov/secure-our-world/recognize-and-report-phishing",
+          },
+          {
+              "title": "Use strong passwords and a password manager",
+              "source": "CISA",
+              "url": "https://www.cisa.gov/secure-our-world/use-strong-passwords",
+          },
+      ]
+  )
+
+
+@app.route("/api/live-news")
+def live_news():
+  api_key = os.environ.get("NEWS_API_KEY")
+  if not api_key:
+    return jsonify({"error": "NewsAPI is not configured."}), 503
+
+  query = urlencode(
+      {
+          "q": "cybersecurity",
+          "language": "en",
+          "pageSize": 20,
+          "apiKey": api_key,
+      }
+  )
+  try:
+    with urlopen(
+        f"https://newsapi.org/v2/everything?{query}",
+        timeout=10,
+    ) as response:
+      payload = json.loads(response.read())
+  except (HTTPException, OSError, json.JSONDecodeError):
+    return jsonify({"error": "NewsAPI is temporarily unavailable."}), 502
+
+  if not isinstance(payload, dict) or payload.get("status") != "ok":
+    return jsonify({"error": "NewsAPI returned an error."}), 502
+
+  payload_articles = payload.get("articles")
+  if not isinstance(payload_articles, list):
+    return jsonify({"error": "NewsAPI returned an invalid response."}), 502
+
+  articles = []
+  for article in payload_articles:
+    if not isinstance(article, dict):
+      continue
+    title = article.get("title")
+    url = article.get("url")
+    source = article.get("source")
+    source_name = source.get("name") if isinstance(source, dict) else None
+    try:
+      parsed_url = urlparse(url) if isinstance(url, str) else None
+    except ValueError:
+      continue
+    if (
+        isinstance(title, str)
+        and title.strip()
+        and isinstance(source_name, str)
+        and source_name.strip()
+        and parsed_url is not None
+        and parsed_url.scheme.lower() in {"http", "https"}
+        and parsed_url.netloc
+    ):
+      articles.append(
+          {
+              "title": title.strip(),
+              "source": source_name.strip(),
+              "url": url,
+          }
+      )
+
+  return jsonify(articles)
 
 
 @app.route("/forum")
