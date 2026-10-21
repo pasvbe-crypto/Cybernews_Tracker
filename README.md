@@ -13,6 +13,16 @@ On its first startup with a Patrick account present, the application sets
 Patrick's Cyberhacks Points balance to 100,000. This one-time initialization
 does not overwrite his balance on later restarts.
 
+## CP Shop
+
+Signed-in users can repeatedly order a Cup (500 CP), Beanie (800 CP), T-Shirt
+(1,200 CP), Hoodie (2,000 CP), Headphones (2,500 CP), or Tesla Rocket
+(100,000 CP). Checkout atomically deducts CP and records each order as pending.
+The recipient name and shipping address are stored with the order and shown
+only in Patrick's administrator dashboard, where orders can be marked fulfilled.
+No phone or payment details are collected. Orders require manual fulfilment;
+the application does not arrange shipping or contact recipients.
+
 ## Run locally
 
 Requirements: Python 3.12 or newer.

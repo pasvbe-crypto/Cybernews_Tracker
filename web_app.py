@@ -15,6 +15,7 @@ import click
 from flask import (
     Flask,
     abort,
+    flash,
     g,
     jsonify,
     redirect,
@@ -40,6 +41,44 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
 ).lower() in {"1", "true", "yes"}
 
 AVAILABLE_ROLES = ("User", "Teaching Assistant", "GOAT")
+CP_SHOP_ITEMS = (
+    {
+        "code": "cup",
+        "name": "Cup",
+        "points": 500,
+        "image": "shop/cup.jpg",
+    },
+    {
+        "code": "beanie",
+        "name": "Beanie",
+        "points": 800,
+        "image": "shop/beanie.jpg",
+    },
+    {
+        "code": "t-shirt",
+        "name": "T-Shirt",
+        "points": 1200,
+        "image": "shop/t-shirt.jpg",
+    },
+    {
+        "code": "hoodie",
+        "name": "Hoodie",
+        "points": 2000,
+        "image": "shop/hoodie.jpg",
+    },
+    {
+        "code": "headphones",
+        "name": "Headphones",
+        "points": 2500,
+        "image": "shop/headphones.jpg",
+    },
+    {
+        "code": "tesla-rocket",
+        "name": "Tesla Rocket",
+        "points": 100000,
+        "image": "shop/tesla-rocket.jpg",
+    },
+)
 HACK_ME_LEVELS = (
     {
         "number": 1,
@@ -315,6 +354,27 @@ def initialize_database():
           UNIQUE(user_id, run_id, level)
         )
         """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cp_shop_orders (
+          id INTEGER PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          item_code TEXT NOT NULL,
+          item_name TEXT NOT NULL,
+          points_spent INTEGER NOT NULL CHECK (points_spent > 0),
+          recipient_name TEXT NOT NULL,
+          shipping_address TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending', 'fulfilled')),
+          created_at TEXT NOT NULL,
+          fulfilled_at TEXT
+        )
+        """
+    )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_cp_shop_orders_status_created "
+        "ON cp_shop_orders(status, created_at DESC)"
     )
     connection.execute(
         """
@@ -851,6 +911,79 @@ def free_money():
   return render_template("free_money.html", role=role)
 
 
+@app.route("/cp-shop", methods=["GET", "POST"])
+@login_required
+def cp_shop():
+  items_by_code = {item["code"]: item for item in CP_SHOP_ITEMS}
+  if request.method == "POST":
+    validate_csrf_token()
+    item = items_by_code.get(request.form.get("item_code", ""))
+    recipient_name = request.form.get("recipient_name", "").strip()
+    shipping_address = request.form.get("shipping_address", "").strip()
+    if item is None:
+      abort(400, description="Select a valid CP Shop item.")
+    if (
+        not recipient_name
+        or len(recipient_name) > 100
+        or not shipping_address
+        or len(shipping_address) > 500
+    ):
+      flash(
+          "Enter a recipient name (up to 100 characters) and a shipping "
+          "address (up to 500 characters).",
+          "error",
+      )
+      return redirect(url_for("cp_shop"))
+
+    with get_db_connection() as connection:
+      debit = connection.execute(
+          "UPDATE users SET cyberhacks_points = cyberhacks_points - ? "
+          "WHERE id = ? AND cyberhacks_points >= ?",
+          (item["points"], g.current_user["id"], item["points"]),
+      )
+      if debit.rowcount != 1:
+        flash(
+            f"Not enough CP for the {item['name']}. "
+            f"It costs {item['points']:,} CP.",
+            "error",
+        )
+      else:
+        connection.execute(
+            """
+            INSERT INTO cp_shop_orders
+                (user_id, item_code, item_name, points_spent, recipient_name,
+                 shipping_address, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                g.current_user["id"],
+                item["code"],
+                item["name"],
+                item["points"],
+                recipient_name,
+                shipping_address,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            ),
+        )
+        flash(
+            f"Order placed for {item['name']}! It is pending manual fulfilment.",
+            "success",
+        )
+    return redirect(url_for("cp_shop"))
+
+  with get_db_connection() as connection:
+    orders = connection.execute(
+        """
+        SELECT item_name, points_spent, status, created_at, fulfilled_at
+        FROM cp_shop_orders
+        WHERE user_id = ?
+        ORDER BY created_at DESC, id DESC
+        """,
+        (g.current_user["id"],),
+    ).fetchall()
+  return render_template("cp_shop.html", items=CP_SHOP_ITEMS, orders=orders)
+
+
 @app.route("/demo-donation")
 @account_required("Alen", {"Teaching Assistant"})
 def demo_donation():
@@ -883,12 +1016,52 @@ def admin_dashboard():
         "SELECT id, username, role, created_at, last_login_at "
         "FROM users ORDER BY username"
     ).fetchall()
+    orders = connection.execute(
+        """
+        SELECT o.id, o.item_name, o.points_spent, o.recipient_name,
+               o.shipping_address, o.status, o.created_at, o.fulfilled_at,
+               u.username
+        FROM cp_shop_orders AS o
+        JOIN users AS u ON u.id = o.user_id
+        ORDER BY o.status = 'pending' DESC, o.created_at DESC, o.id DESC
+        """
+    ).fetchall()
   return render_template(
       "admin_dashboard.html",
       user=g.current_user,
       users=users,
+      orders=orders,
       available_roles=AVAILABLE_ROLES,
   )
+
+
+@app.route("/admin/cp-shop-orders/<int:order_id>/fulfill", methods=["POST"])
+@admin_required
+def fulfill_cp_shop_order(order_id):
+  validate_csrf_token()
+  with get_db_connection() as connection:
+    result = connection.execute(
+        """
+        UPDATE cp_shop_orders
+        SET status = 'fulfilled', fulfilled_at = ?
+        WHERE id = ? AND status = 'pending'
+        """,
+        (
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            order_id,
+        ),
+    )
+    if result.rowcount == 0:
+      exists = connection.execute(
+          "SELECT 1 FROM cp_shop_orders WHERE id = ?",
+          (order_id,),
+      ).fetchone()
+      if exists is None:
+        abort(404)
+      flash("That order has already been marked fulfilled.", "info")
+    else:
+      flash("Order marked as fulfilled.", "success")
+  return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/admin/users/<int:user_id>/role", methods=["POST"])
