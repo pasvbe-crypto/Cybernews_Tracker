@@ -36,6 +36,38 @@ main {
 	padding: 40px 0;
 }
 
+.news-page {
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 0 16px;
+}
+
+.news-heading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+}
+
+.news-list {
+	padding: 0;
+	text-align: left;
+	list-style: none;
+}
+
+.news-list li {
+	margin: 12px 0;
+	padding: 16px;
+	background: white;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+}
+
+.news-list a {
+	color: #174ea6;
+	font-weight: bold;
+}
+
 .home-video {
 	max-width: 900px;
 	margin: 0 auto;
