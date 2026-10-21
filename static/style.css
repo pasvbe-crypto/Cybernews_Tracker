@@ -185,19 +185,44 @@ nav {
 	margin-top: 2px;
 }
 
+nav.signed-in-nav {
+	justify-content: space-between;
+}
+
+.nav-main-links,
+.nav-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px 18px;
+}
+
+.nav-main-links {
+	justify-content: flex-start;
+}
+
+.nav-actions {
+	justify-content: flex-end;
+	margin-left: auto;
+}
+
 .nav-account-links {
-	position: absolute;
-	top: 50%;
-	right: 0;
 	display: flex;
 	gap: 18px;
-	transform: translateY(-50%);
 }
 
 @media (max-width: 1100px) {
-	.nav-account-links {
-		position: static;
-		transform: none;
+	nav.signed-in-nav {
+		justify-content: center;
+	}
+
+	.nav-main-links,
+	.nav-actions {
+		justify-content: center;
+	}
+
+	.nav-actions {
+		margin-left: 0;
 	}
 }
 
@@ -242,6 +267,29 @@ main {
 	width: 100%;
 	flex: 1 0 auto;
 	padding: clamp(28px, 5vw, 56px) 0;
+}
+
+.flash-messages {
+	width: min(100% - 32px, 900px);
+	margin: 0 auto 20px;
+}
+
+.flash-message {
+	margin: 8px 0;
+	padding: 12px 16px;
+	background: var(--surface);
+}
+
+.flash-success {
+	color: var(--accent);
+}
+
+.flash-error {
+	color: var(--danger);
+}
+
+.flash-info {
+	color: var(--muted);
 }
 
 footer {
@@ -652,6 +700,149 @@ hr {
 	padding: 10px 12px;
 }
 
+.shop-page {
+	width: min(100% - 32px, 1100px);
+	margin: 0 auto;
+	text-align: left;
+}
+
+.shop-intro,
+.shop-privacy-note,
+.shop-order-meta {
+	color: var(--muted);
+}
+
+.shop-products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+	gap: 18px;
+	margin: 24px 0;
+}
+
+.shop-product label {
+	display: flex;
+	height: 100%;
+	overflow: hidden;
+	flex-direction: column;
+	background: var(--surface);
+	cursor: pointer;
+}
+
+.shop-product input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+	opacity: 0;
+}
+
+.shop-product input:focus-visible + label {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.shop-product input:checked + label {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.shop-product img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 2 / 1;
+	object-fit: cover;
+}
+
+.shop-product-details {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 14px;
+}
+
+.shop-product-details strong {
+	color: var(--accent);
+}
+
+.shop-shipping-form {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	margin: 24px 0;
+	padding: 20px;
+	background: var(--surface);
+}
+
+.shop-shipping-form > label {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.shop-shipping-form input,
+.shop-shipping-form textarea {
+	width: 100%;
+	padding: 10px 12px;
+	border: 0;
+	background: var(--input-bg);
+	color: var(--text);
+}
+
+.shop-shipping-form textarea {
+	resize: vertical;
+}
+
+.shop-shipping-form button {
+	align-self: flex-start;
+}
+
+.shop-orders,
+.admin-orders {
+	margin-top: 40px;
+	text-align: left;
+}
+
+.shop-table-wrapper {
+	overflow-x: auto;
+}
+
+.shop-order-table,
+.admin-order-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.shop-order-table th,
+.shop-order-table td,
+.admin-order-table th,
+.admin-order-table td {
+	padding: 10px 12px;
+	vertical-align: top;
+}
+
+.shop-order-table tbody tr,
+.admin-order-table tbody tr {
+	background: var(--surface);
+}
+
+.admin-orders address {
+	min-width: 180px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-style: normal;
+}
+
+.admin-orders form {
+	margin: 0;
+}
+
 .visually-hidden {
 	position: absolute;
 	width: 1px;
@@ -684,6 +875,11 @@ hr {
 	}
 
 	nav {
+		gap: 6px 14px;
+	}
+
+	.nav-main-links,
+	.nav-actions {
 		gap: 6px 14px;
 	}
 
