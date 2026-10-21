@@ -246,6 +246,146 @@ footer a:visited {
 	margin: 0 auto;
 }
 
+.hack-me {
+	width: min(100% - 32px, 900px);
+	margin: 0 auto;
+	text-align: left;
+}
+
+.hack-me-heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+}
+
+.hack-me-heading h2,
+.hack-me-heading p {
+	margin: 0;
+}
+
+.hack-me-safety,
+.hack-me-hint,
+.hack-run-score {
+	color: var(--muted);
+}
+
+.hack-me-notice {
+	color: var(--accent);
+	font-weight: bold;
+}
+
+.hack-levels {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 10px;
+	margin: 24px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.hack-levels li {
+	display: flex;
+	min-height: 64px;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	padding: 8px;
+	background: var(--surface);
+	color: var(--muted);
+	text-align: center;
+}
+
+.hack-levels li.current {
+	background: var(--surface-raised);
+	color: var(--accent);
+	outline: 2px solid var(--accent);
+}
+
+.hack-levels li.completed {
+	color: var(--text);
+}
+
+.hack-terminal {
+	overflow: hidden;
+	background: #100d19;
+	color: #f5f0ff;
+}
+
+.hack-terminal-title {
+	padding: 8px 14px;
+	background: #241d34;
+	color: #c6a7ff;
+	font-size: 0.85rem;
+	font-weight: bold;
+}
+
+.hack-terminal-output {
+	min-height: 140px;
+	padding: 16px;
+	font-family: "Cascadia Code", "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
+	overflow-wrap: anywhere;
+}
+
+.hack-terminal-output p:first-child {
+	margin-top: 0;
+	color: #c6a7ff;
+}
+
+.hack-terminal-output pre {
+	margin-bottom: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.hack-command-form {
+	margin: 20px 0;
+}
+
+.hack-command-form label {
+	display: block;
+	margin-bottom: 8px;
+}
+
+.hack-command-entry {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.hack-command-entry span {
+	color: var(--accent);
+	font-weight: bold;
+}
+
+.hack-command-entry input {
+	min-width: 0;
+	flex: 1;
+	padding: 10px 12px;
+	border: 0;
+	background: var(--input-bg);
+	color: var(--text);
+}
+
+.hack-replay-form {
+	margin: 20px 0;
+}
+
+.hack-command-reference {
+	margin-top: 28px;
+	color: var(--muted);
+}
+
+.hack-command-reference summary {
+	color: var(--accent);
+	cursor: pointer;
+}
+
+.hack-command-reference code {
+	color: var(--text);
+}
+
 .auth-page {
 	width: min(100% - 32px, 520px);
 	margin: 0 auto;
@@ -522,6 +662,23 @@ hr {
 	.forum-heading {
 		align-items: flex-start;
 		flex-direction: column;
+	}
+
+	.hack-levels {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.hack-command-entry {
+		align-items: stretch;
+		flex-wrap: wrap;
+	}
+
+	.hack-command-entry input {
+		flex-basis: calc(100% - 54px);
+	}
+
+	.hack-command-entry button {
+		width: 100%;
 	}
 
 	.forum-form-actions {
