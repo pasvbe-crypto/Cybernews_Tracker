@@ -1,6 +1,7 @@
 {% extends "index.html" %}
 
 {% block content %}
+<section class="auth-page">
 <h2>Create an account</h2>
 <p>New accounts are created with the User role.</p>
 {% if error %}
@@ -19,4 +20,5 @@
     <button type="submit">Register</button>
 </form>
 <p>Already registered? <a href="{{ url_for('cookie_check') }}">Sign in</a>.</p>
+</section>
 {% endblock %}

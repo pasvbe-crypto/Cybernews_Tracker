@@ -1,6 +1,7 @@
 {% extends "index.html" %}
 
 {% block content %}
+<section class="auth-page">
 {% if registered %}
     <p role="status">Registration successful. You can now sign in.</p>
 {% endif %}
@@ -27,6 +28,7 @@
         <button type="submit">Sign In</button>
     </form>
 {% endif %}
+</section>
 
 <hr>
 <h2>Cookie Check &amp; Security Demo</h2>
