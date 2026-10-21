@@ -133,6 +133,27 @@ header #greeting {
 	font-size: 0.8rem;
 }
 
+.balance-badge {
+	position: absolute;
+	top: 18px;
+	left: 24px;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	background: var(--surface-raised);
+	color: var(--text);
+	font-size: 0.8rem;
+}
+
+.balance-badge span {
+	color: var(--muted);
+}
+
+.balance-badge strong {
+	color: var(--accent);
+}
+
 .theme-toggle-track {
 	display: inline-flex;
 	width: 36px;
@@ -652,6 +673,14 @@ hr {
 	.theme-toggle {
 		top: 14px;
 		right: 16px;
+	}
+
+	.balance-badge {
+		top: 14px;
+		left: 16px;
+		gap: 6px;
+		padding: 8px;
+		font-size: 0.72rem;
 	}
 
 	nav {
