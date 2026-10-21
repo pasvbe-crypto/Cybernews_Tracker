@@ -1,0 +1,96 @@
+{% extends "index.html" %}
+
+{% block content %}
+<section class="intelligence-page">
+    <h2>Intelligence Division (PR)</h2>
+    <p class="intelligence-intro">
+        Fetch a role-specific synthetic intelligence report using an active
+        bearer token. The API token is independent of your site login.
+    </p>
+    <button id="fetchIntelligence" type="button">Fetch Intelligence</button>
+
+    <section class="intelligence-reports" aria-live="polite">
+        <h3>Intelligence Reports</h3>
+        <p id="intelligenceEmpty" class="intelligence-empty">
+            No reports fetched yet.
+        </p>
+        <div id="intelligenceReports"></div>
+    </section>
+</section>
+
+<script>
+    const fetchIntelligenceButton =
+        document.getElementById("fetchIntelligence");
+    const intelligenceReports =
+        document.getElementById("intelligenceReports");
+    const intelligenceEmpty =
+        document.getElementById("intelligenceEmpty");
+
+    fetchIntelligenceButton.addEventListener("click", async () => {
+        const enteredToken = window.prompt("Enter your intelligence API token:");
+        if (enteredToken === null) {
+            return;
+        }
+
+        const token = enteredToken.trim();
+        if (!token) {
+            window.alert("A bearer token is required.");
+            return;
+        }
+
+        fetchIntelligenceButton.disabled = true;
+        try {
+            const response = await fetch("/api/intelligence-feed", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const payload = await response.json();
+            if (response.status === 401) {
+                window.alert("Access denied: the intelligence token is invalid.");
+                return;
+            }
+            if (response.status === 403) {
+                window.alert("Access denied: this token cannot view the report.");
+                return;
+            }
+            if (!response.ok) {
+                window.alert(
+                    payload.error || "The intelligence report could not be fetched."
+                );
+                return;
+            }
+
+            const report = payload.report;
+            const card = document.createElement("article");
+            const title = document.createElement("h3");
+            const classification = document.createElement("p");
+            const summary = document.createElement("p");
+            const indicators = document.createElement("ul");
+
+            card.className = "intelligence-report";
+            title.textContent = report.title;
+            classification.className = "intelligence-report-meta";
+            classification.textContent =
+                `${report.classification} · ${payload.role}`;
+            summary.textContent = report.summary;
+            for (const indicator of report.indicators) {
+                const item = document.createElement("li");
+                item.textContent = indicator;
+                indicators.appendChild(item);
+            }
+
+            card.append(title, classification, summary, indicators);
+            intelligenceReports.appendChild(card);
+            intelligenceEmpty.hidden = true;
+        } catch (error) {
+            console.error("Unable to fetch intelligence report.", error);
+            window.alert(
+                "The intelligence service could not be reached. Please try again."
+            );
+        } finally {
+            fetchIntelligenceButton.disabled = false;
+        }
+    });
+</script>
+{% endblock %}
