@@ -40,6 +40,44 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get(
     "SESSION_COOKIE_SECURE", ""
 ).lower() in {"1", "true", "yes"}
 
+INTELLIGENCE_TOKEN_ROLES = {"admin", "analyst"}
+
+
+def load_intelligence_tokens():
+  raw_tokens = os.environ.get("INTELLIGENCE_TOKENS", "{}")
+  try:
+    tokens = json.loads(raw_tokens)
+  except json.JSONDecodeError as error:
+    raise RuntimeError(
+        "INTELLIGENCE_TOKENS must be a JSON object mapping bearer tokens "
+        "to 'admin' or 'analyst'."
+    ) from error
+
+  if not isinstance(tokens, dict):
+    raise RuntimeError(
+        "INTELLIGENCE_TOKENS must be a JSON object mapping bearer tokens "
+        "to 'admin' or 'analyst'."
+    )
+
+  for token, role in tokens.items():
+    if (
+        not isinstance(token, str)
+        or not token
+        or token != token.strip()
+        or any(character.isspace() for character in token)
+        or not isinstance(role, str)
+        or role not in INTELLIGENCE_TOKEN_ROLES
+    ):
+      raise RuntimeError(
+          "INTELLIGENCE_TOKENS entries must use non-empty tokens without "
+          "whitespace and the role 'admin' or 'analyst'."
+      )
+
+  return tokens
+
+
+app.config["INTELLIGENCE_TOKENS"] = load_intelligence_tokens()
+
 AVAILABLE_ROLES = ("User", "Teaching Assistant", "GOAT")
 CP_SHOP_ITEMS = (
     {
@@ -79,6 +117,32 @@ CP_SHOP_ITEMS = (
         "image": "shop/tesla-rocket.jpg",
     },
 )
+INTELLIGENCE_REPORTS = {
+    "admin": {
+        "classification": "ADMINISTRATOR",
+        "title": "Security Operations Overview",
+        "summary": (
+            "Synthetic training report: review these example events in an "
+            "authorized environment."
+        ),
+        "indicators": [
+            "A sample service account has an outdated credential.",
+            "A simulated sign-in pattern requires administrator review.",
+        ],
+    },
+    "analyst": {
+        "classification": "ANALYST",
+        "title": "Threat Activity Brief",
+        "summary": (
+            "Synthetic training report: assess the example indicators and "
+            "record any follow-up observations."
+        ),
+        "indicators": [
+            "The training feed contains a simulated sequence of failed sign-ins.",
+            "A sample endpoint generated an unusual process alert.",
+        ],
+    },
+}
 HACK_ME_LEVELS = (
     {
         "number": 1,
@@ -554,6 +618,12 @@ def news():
   )
 
 
+@app.route("/intelligence")
+@login_required
+def intelligence():
+  return render_template("intelligence.html")
+
+
 @app.route("/hack-me", methods=["GET", "POST"])
 @login_required
 def hack_me():
@@ -717,6 +787,40 @@ def static_news():
           },
       ]
   )
+
+
+@app.route("/api/intelligence-feed")
+def intelligence_feed():
+  authorization = request.headers.get("Authorization", "")
+  scheme, separator, token = authorization.partition(" ")
+  if (
+      scheme.casefold() != "bearer"
+      or not separator
+      or not token
+      or token != token.strip()
+  ):
+    return jsonify({"error": "A valid bearer token is required."}), 401
+
+  role = next(
+      (
+          token_role
+          for active_token, token_role
+          in app.config["INTELLIGENCE_TOKENS"].items()
+          if secrets.compare_digest(token, active_token)
+      ),
+      None,
+  )
+  if role is None:
+    return jsonify({"error": "Invalid intelligence token."}), 401
+
+  response = jsonify(
+      {
+          "role": role,
+          "report": INTELLIGENCE_REPORTS[role],
+      }
+  )
+  response.headers["Cache-Control"] = "no-store"
+  return response
 
 
 @app.route("/api/live-news")
