@@ -10,7 +10,7 @@
 			console.error("Unable to load the saved theme preference.", error);
 		}
 	</script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='8') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='9') }}">
 	<title>CyberNews Tracker</title>
 </head>
 <body>
@@ -44,6 +44,7 @@
 				<a href="{{ url_for('hack_me') }}" class="{% if request.endpoint == 'hack_me' %}active{% endif %}" {% if request.endpoint == 'hack_me' %}aria-current="page"{% endif %}>Hack Me</a>
 				{% if current_user %}
 					<a href="{{ url_for('cp_shop') }}" class="{% if request.endpoint == 'cp_shop' %}active{% endif %}" {% if request.endpoint == 'cp_shop' %}aria-current="page"{% endif %}>CP Shop</a>
+					<a href="{{ url_for('intelligence') }}" class="{% if request.endpoint == 'intelligence' %}active{% endif %}" {% if request.endpoint == 'intelligence' %}aria-current="page"{% endif %}>Intelligence</a>
 				{% endif %}
 			</span>
 			<span class="nav-account-actions">
