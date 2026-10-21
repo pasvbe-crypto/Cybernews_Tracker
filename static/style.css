@@ -154,6 +154,7 @@ header #greeting {
 }
 
 nav {
+	position: relative;
 	display: flex;
 	width: 100%;
 	align-items: center;
@@ -161,6 +162,22 @@ nav {
 	flex-wrap: wrap;
 	gap: 4px 18px;
 	margin-top: 2px;
+}
+
+.nav-account-links {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	display: flex;
+	gap: 18px;
+	transform: translateY(-50%);
+}
+
+@media (max-width: 1100px) {
+	.nav-account-links {
+		position: static;
+		transform: none;
+	}
 }
 
 nav a {
@@ -231,8 +248,8 @@ footer a:visited {
 
 .auth-page {
 	width: min(100% - 32px, 520px);
-	margin: 0 clamp(16px, 8vw, 120px) 0 auto;
-	text-align: left;
+	margin: 0 auto;
+	text-align: center;
 }
 
 .news-page,
@@ -505,10 +522,6 @@ hr {
 	.forum-heading {
 		align-items: flex-start;
 		flex-direction: column;
-	}
-
-	.auth-page {
-		margin-right: auto;
 	}
 
 	.forum-form-actions {
